@@ -35,10 +35,35 @@ var (
 	ExpDiffPeriod = big.NewInt(100000)
 )
 
-// CalcDifficulty is the difficulty adjustment algorithm. It returns
+func CalcDifficulty(time, parentTime uint64, parentNumber, parentDiff *big.Int) *big.Int {
+
+	if parentNumber.Cmp(params.HardFork2) < 0 {
+		return LegacyCalcDifficulty(time, parentTime, parentNumber, parentDiff)
+	}else{
+		return ExpanseVelocityController(time, parentTime, parentNumber, parentDiff)
+	}
+
+	return
+}
+// ExpanseVelocityController
+// the difficulty is determined by a moving average of 1 day's worth of blocks
+func ExpanseVelocityController(time, parentTime uint64, parentNumber, parentDiff *big.Int) *big.Int {
+	//variables
+	diff := new(big.Int)
+	ancestorBlock := GetBlockByNumber(common.Database, new(big.Int).Sub(parentNumber, params.BlocksToAvg))
+	avgBlocktime := new(big.Int).Sub(time, ancestorBlock.Time()).Div(avgBlocktime, params.BlocksToAvg)
+	if avgBlocktime.cpm(params.DurationLimit) < 0 {
+		diff.Mul(parentDiff, new(big.Int).Div(params.DurationLimit, avgBlocktime))
+	}else{
+		diff.Div(parentDiff, new(big.Int).Div(avgBlocktime, params.DurationLimit))
+	}
+	return diff
+}
+
+// LegacyCalcDifficulty is the difficulty adjustment algorithm. It returns
 // the difficulty that a new block b should have when created at time
 // given the parent block's time and difficulty.
-func CalcDifficulty(time, parentTime uint64, parentNumber, parentDiff *big.Int) *big.Int {
+func LegacyCalcDifficulty(time, parentTime uint64, parentNumber, parentDiff *big.Int) *big.Int {
 	diff := new(big.Int)
     adjust := new(big.Int)
 

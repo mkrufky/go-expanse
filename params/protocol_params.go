@@ -32,6 +32,8 @@ var (
 	DifficultyBoundDivisor = big.NewInt(2048)   // The bound divisor of the difficulty, used in the update calculations.
 	DifficultyBoundDivisor2 = big.NewInt(512)   // Difficulty should adjust faster.
 	HardFork1               = big.NewInt(23000) // fork at this block number
+	HardFork2			= big.NewInt(50000) // Turns on ExpanseVelocityController
+	BlocksToAvg			= big.NewInt(1440)  // One days worth of blocks
 	QuadCoeffDiv           = big.NewInt(512)    // Divisor for the quadratic particle of the memory cost equation.
 	GenesisDifficulty      = big.NewInt(131072) // Difficulty of the Genesis block.
 	DurationLimit          = big.NewInt(60)     // The decision boundary on the blocktime duration used to determine whether difficulty should go up or not.
