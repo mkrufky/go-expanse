@@ -28,7 +28,7 @@ ENV PATH $GOROOT/bin:$GOPATH/bin:$PATH
 RUN git clone http://www.github.com/expanse-project/go-expanse.git
 RUN cd go-expanse && make gexp
 
-RUN cp build/bin/gexp /usr/bin/gexp
+RUN cp /build/bin/gexp /usr/bin/gexp
 
 EXPOSE 9656
 EXPOSE 42786
