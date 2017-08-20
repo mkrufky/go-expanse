@@ -47,15 +47,15 @@ func TestConsoleWelcome(t *testing.T) {
 		"console")
 
 	// Gather all the infos the welcome message needs to contain
-	gexp.setTemplateFunc("goos", func() string { return runtime.GOOS })
-	gexp.setTemplateFunc("goarch", func() string { return runtime.GOARCH })
-	gexp.setTemplateFunc("gover", runtime.Version)
-	gexp.setTemplateFunc("gethver", func() string { return params.Version })
-	gexp.setTemplateFunc("niltime", func() string { return time.Unix(0, 0).Format(time.RFC1123) })
-	gexp.setTemplateFunc("apis", func() string { return ipcAPIs })
+	gexp.SetTemplateFunc("goos", func() string { return runtime.GOOS })
+	gexp.SetTemplateFunc("goarch", func() string { return runtime.GOARCH })
+	gexp.SetTemplateFunc("gover", runtime.Version)
+	gexp.SetTemplateFunc("gethver", func() string { return params.Version })
+	gexp.SetTemplateFunc("niltime", func() string { return time.Unix(0, 0).Format(time.RFC1123) })
+	gexp.SetTemplateFunc("apis", func() string { return ipcAPIs })
 
 	// Verify the actual welcome message to the required template
-	gexp.expect(`
+	gexp.Expect(`
 Welcome to the Gexp JavaScript console!
 
 instance: Gexp/v{{gethver}}/{{goos}}-{{goarch}}/{{gover}}
@@ -66,7 +66,8 @@ at block: 0 ({{niltime}})
 
 > {{.InputLine "exit"}}
 `)
-	gexp.expectExit()
+
+	gexp.ExpectExit()
 }
 
 // Tests that a console can be attached to a running node via various means.
@@ -90,8 +91,8 @@ func TestIPCAttachWelcome(t *testing.T) {
 	time.Sleep(2 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, gexp, "ipc:"+ipc, ipcAPIs)
 
-	gexp.interrupt()
-	gexp.expectExit()
+	gexp.Interrupt()
+	gexp.ExpectExit()
 }
 
 func TestHTTPAttachWelcome(t *testing.T) {
@@ -104,8 +105,8 @@ func TestHTTPAttachWelcome(t *testing.T) {
 	time.Sleep(2 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, gexp, "http://localhost:"+port, httpAPIs)
 
-	gexp.interrupt()
-	gexp.expectExit()
+	gexp.Interrupt()
+	gexp.ExpectExit()
 }
 
 func TestWSAttachWelcome(t *testing.T) {
@@ -119,32 +120,32 @@ func TestWSAttachWelcome(t *testing.T) {
 	time.Sleep(2 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, gexp, "ws://localhost:"+port, httpAPIs)
 
-	gexp.interrupt()
-	gexp.expectExit()
+	gexp.Interrupt()
+	gexp.ExpectExit()
 }
 
 func testAttachWelcome(t *testing.T, gexp *testgeth, endpoint, apis string) {
 	// Attach to a running gexp note and terminate immediately
 	attach := runGeth(t, "attach", endpoint)
-	defer attach.expectExit()
-	attach.stdin.Close()
+	defer attach.ExpectExit()
+	attach.CloseStdin()
 
 	// Gather all the infos the welcome message needs to contain
-	attach.setTemplateFunc("goos", func() string { return runtime.GOOS })
-	attach.setTemplateFunc("goarch", func() string { return runtime.GOARCH })
-	attach.setTemplateFunc("gover", runtime.Version)
-	attach.setTemplateFunc("gethver", func() string { return params.Version })
-	attach.setTemplateFunc("etherbase", func() string { return gexp.Etherbase })
-	attach.setTemplateFunc("niltime", func() string { return time.Unix(0, 0).Format(time.RFC1123) })
-	attach.setTemplateFunc("ipc", func() bool { return strings.HasPrefix(endpoint, "ipc") })
-	attach.setTemplateFunc("datadir", func() string { return gexp.Datadir })
-	attach.setTemplateFunc("apis", func() string { return apis })
+	attach.SetTemplateFunc("goos", func() string { return runtime.GOOS })
+	attach.SetTemplateFunc("goarch", func() string { return runtime.GOARCH })
+	attach.SetTemplateFunc("gover", runtime.Version)
+	attach.SetTemplateFunc("gethver", func() string { return params.Version })
+	attach.SetTemplateFunc("etherbase", func() string { return gexp.Etherbase })
+	attach.SetTemplateFunc("niltime", func() string { return time.Unix(0, 0).Format(time.RFC1123) })
+	attach.SetTemplateFunc("ipc", func() bool { return strings.HasPrefix(endpoint, "ipc") })
+	attach.SetTemplateFunc("datadir", func() string { return gexp.Datadir })
+	attach.SetTemplateFunc("apis", func() string { return apis })
 
 	// Verify the actual welcome message to the required template
-	attach.expect(`
+	attach.Expect(`
 Welcome to the Gexp JavaScript console!
 
-instance: Geth/v{{gethver}}/{{goos}}-{{goarch}}/{{gover}}
+instance: Gexp/v{{gethver}}/{{goos}}-{{goarch}}/{{gover}}
 coinbase: {{etherbase}}
 at block: 0 ({{niltime}}){{if ipc}}
  datadir: {{datadir}}{{end}}
@@ -152,7 +153,7 @@ at block: 0 ({{niltime}}){{if ipc}}
 
 > {{.InputLine "exit" }}
 `)
-	attach.expectExit()
+	attach.ExpectExit()
 }
 
 // trulyRandInt generates a crypto random integer used by the console tests to

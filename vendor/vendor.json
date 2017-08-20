@@ -75,6 +75,12 @@
 			"revisionTime": "2017-02-01T22:58:49Z"
 		},
 		{
+			"checksumSHA1": "lutCa+IVM60R1OYBm9RtDAW50Ys=",
+			"path": "github.com/docker/docker/pkg/reexec",
+			"revision": "83ee902ecc3790c33c1e2d87334074436056bb49",
+			"revisionTime": "2017-04-22T21:51:12Z"
+		},
+		{
 			"checksumSHA1": "zYnPsNAVm1/ViwCkN++dX2JQhBo=",
 			"path": "github.com/edsrzf/mmap-go",
 			"revision": "935e0e8a636ca4ba70b713f3e38a19e1b77739e8",
@@ -93,10 +99,22 @@
 			"revisionTime": "2017-01-17T22:23:42Z"
 		},
 		{
-			"checksumSHA1": "2sj/DbXoXdnPAfjAEyhS0Jj5QL0=",
+			"checksumSHA1": "KZ3QD2QgUS4RcoKiA3mn5pSlJxQ=",
 			"path": "github.com/go-stack/stack",
-			"revision": "100eb0c0a9c5b306ca2fb4f165df21d80ada4b82",
-			"revisionTime": "2016-05-14T03:44:11Z"
+			"revision": "54be5f394ed2c3e19dac9134a40a95ba5a017f7b",
+			"revisionTime": "2017-07-10T16:04:46Z"
+		},
+		{
+			"checksumSHA1": "yqF125xVSkmfLpIVGrLlfE05IUk=",
+			"path": "github.com/golang/protobuf/proto",
+			"revision": "748d386b5c1ea99658fd69fe9f03991ce86a90c1",
+			"revisionTime": "2017-07-26T21:28:29Z"
+		},
+		{
+			"checksumSHA1": "Z1gJ3PKzwBpOoPnTSEM5yd0zHYA=",
+			"path": "github.com/golang/protobuf/protoc-gen-go/descriptor",
+			"revision": "748d386b5c1ea99658fd69fe9f03991ce86a90c1",
+			"revisionTime": "2017-07-26T21:28:29Z"
 		},
 		{
 			"checksumSHA1": "p/8vSviYF91gFflhrt5vkyksroo=",
@@ -502,6 +520,12 @@
 			"revisionTime": "2017-02-15T08:41:58Z"
 		},
 		{
+			"checksumSHA1": "4TEYFKrAUuwBMqExjQBsnf/CgjQ=",
+			"path": "golang.org/x/sync/syncmap",
+			"revision": "f52d1811a62927559de87708c8913c1650ce4f26",
+			"revisionTime": "2017-05-17T20:25:26Z"
+		},
+		{
 			"checksumSHA1": "rTPzsn0jeqfgnQR0OsMKR8JRy5Y=",
 			"path": "golang.org/x/sys/unix",
 			"revision": "e24f485414aeafb646f6fca458b0bf869c0880a1",
@@ -646,10 +670,10 @@
 			"revisionTime": "2017-02-13T14:20:43Z"
 		},
 		{
-			"checksumSHA1": "brhONOPp4CSdTZf5uEtcH+FpFUI=",
+			"checksumSHA1": "Yx1MU40fyGe7hhqW9+dkv8kXa60=",
 			"path": "gopkg.in/urfave/cli.v1",
-			"revision": "0bdeddeeb0f650497d603c4ad7b20cfe685682f6",
-			"revisionTime": "2016-11-22T04:36:10Z"
+			"revision": "cfb38830724cc34fedffe9a2a29fb54fa9169cd1",
+			"revisionTime": "2017-08-11T01:42:03Z"
 		}
 	],
 	"rootPath": "github.com/expanse-org/go-expanse"

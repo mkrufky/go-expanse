@@ -1,4 +1,4 @@
-## Expanse Go
+## Go Expanse
 
 Official golang implementation of the Expanse protocol.
 
@@ -32,14 +32,14 @@ The go-expanse project comes with several wrappers/executables found in the `cmd
 
 | Command    | Description |
 |:----------:|-------------|
-| **`gexp`** | Our main Expanse CLI client. It is the entry point into the Expanse network (main-, test- or private net), capable of running as a full node (default) archive node (retaining all historical state) or a light node (retrieving data live). It can be used by other processes as a gateway into the Expanse network via JSON RPC endpoints exposed on top of HTTP, WebSocket and/or IPC transports. `gexp --help` and the [CLI Wiki page](https://github.com/expanse-org/go-expanse/wiki/Command-Line-Options) for command line options |
+| **`gexp`** | Our main Expanse CLI client. It is the entry point into the Expanse network (main-, test- or private net), capable of running as a full node (default) archive node (retaining all historical state) or a light node (retrieving data live). It can be used by other processes as a gateway into the Expanse network via JSON RPC endpoints exposed on top of HTTP, WebSocket and/or IPC transports. `gexp --help` and the [CLI Wiki page](https://github.com/expanse-org/go-expanse/wiki/Command-Line-Options) for command line options. |
 | `abigen` | Source code generator to convert Expanse contract definitions into easy to use, compile-time type-safe Go packages. It operates on plain [Expanse contract ABIs](https://github.com/expanse-org/wiki/wiki/Expanse-Contract-ABI) with expanded functionality if the contract bytecode is also available. However it also accepts Solidity source files, making development much more streamlined. Please see our [Native DApps](https://github.com/expanse-org/go-expanse/wiki/Native-DApps:-Go-bindings-to-Expanse-contracts) wiki page for details. |
 | `bootnode` | Stripped down version of our Expanse client implementation that only takes part in the network node discovery protocol, but does not run any of the higher level application protocols. It can be used as a lightweight bootstrap node to aid in finding peers in private networks. |
-| `disasm` | Bytecode disassembler to convert EVM (Expanse Virtual Machine) bytecode into more user friendly assembly-like opcodes (e.g. `echo "6001" | disasm`). For details on the individual opcodes, please see pages 22-30 of the [Expanse Yellow Paper](http://gavwood.com/paper.pdf). |
 | `evm` | Developer utility version of the EVM (Expanse Virtual Machine) that is capable of running bytecode snippets within a configurable environment and execution mode. Its purpose is to allow insolated, fine-grained debugging of EVM opcodes (e.g. `evm --code 60ff60ff --debug`). |
-| `gexprpctest` | Developer utility tool to support our [expanse/rpc-test](https://github.com/expanse-org/rpc-tests) test suite which validates baseline conformity to the [Expanse JSON RPC](https://github.com/expanse-org/wiki/wiki/JSON-RPC) specs. Please see the [test suite's readme](https://github.com/expanse-org/rpc-tests/blob/master/README.md) for details. |
+| `gexprpctest` | Developer utility tool to support our [Expanse/rpc-test](https://github.com/expanse-org/rpc-tests) test suite which validates baseline conformity to the [Expanse JSON RPC](https://github.com/expanse-org/wiki/wiki/JSON-RPC) specs. Please see the [test suite's readme](https://github.com/expanse-org/rpc-tests/blob/master/README.md) for details. |
 | `rlpdump` | Developer utility tool to convert binary RLP ([Recursive Length Prefix](https://github.com/expanse-org/wiki/wiki/RLP)) dumps (data encoding used by the Expanse protocol both network as well as consensus wise) to user friendlier hierarchical representation (e.g. `rlpdump --hex CE0183FFFFFFC4C304050583616263`). |
 | `swarm`    | swarm daemon and tools. This is the entrypoint for the swarm network. `swarm --help` for command line options and subcommands. See https://swarm-guide.readthedocs.io for swarm documentation. |
+| `puppeth`    | a CLI wizard that aids in creating a new Expanse network. |
 
 ## Running gexp
 
@@ -94,14 +94,29 @@ Specifying the `--testnet` flag however will reconfigure your Gexp instance a bi
    and Linux this also means that attaching to a running testnet node requires the use of a custom
    endpoint since `gexp attach` will try to attach to a production node endpoint by default. E.g.
    `gexp attach <datadir>/testnet/gexp.ipc`. Windows users are not affected by this.
- * Instead of connecting the main Ethereum network, the client will connect to the test network,
->>>>>>> 6171d01b1195abd7ac75044dcd507d4758d83cde
+ * Instead of connecting the main Expanse network, the client will connect to the test network,
    which uses different P2P bootnodes, different network IDs and genesis states.
 
 *Note: Although there are some internal protective measures to prevent transactions from crossing
 over between the main network and test network, you should make sure to always use separate accounts
 for play-money and real-money. Unless you manually move accounts, Gexp will by default correctly
 separate the two networks and will not make any accounts available between them.*
+
+### Configuration
+
+As an alternative to passing the numerous flags to the `gexp` binary, you can also pass a configuration file via:
+
+```
+$ gexp --config /path/to/your_config.toml
+```
+
+To get an idea how the file should look like you can use the `dumpconfig` subcommand to export your existing configuration:
+
+```
+$ gexp --your-favourite-flags dumpconfig
+```
+
+*Note: This works only with gexp v1.6.0 and above*
 
 #### Docker quick start
 

@@ -45,19 +45,12 @@ func (db *MemDatabase) Put(key []byte, value []byte) error {
 	return nil
 }
 
-func (db *MemDatabase) Set(key []byte, value []byte) {
-	db.lock.Lock()
-	defer db.lock.Unlock()
-
-	db.Put(key, value)
-}
-
 func (db *MemDatabase) Get(key []byte) ([]byte, error) {
 	db.lock.RLock()
 	defer db.lock.RUnlock()
 
 	if entry, ok := db.db[string(key)]; ok {
-		return entry, nil
+		return common.CopyBytes(entry), nil
 	}
 	return nil, errors.New("not found")
 }

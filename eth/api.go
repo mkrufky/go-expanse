@@ -465,26 +465,6 @@ func (api *PrivateDebugAPI) traceBlock(block *types.Block, logConfig *vm.LogConf
 	return true, structLogger.StructLogs(), nil
 }
 
-// callmsg is the message type used for call transitions.
-type callmsg struct {
-	addr          common.Address
-	to            *common.Address
-	gas, gasPrice *big.Int
-	value         *big.Int
-	data          []byte
-}
-
-// accessor boilerplate to implement core.Message
-func (m callmsg) From() (common.Address, error)         { return m.addr, nil }
-func (m callmsg) FromFrontier() (common.Address, error) { return m.addr, nil }
-func (m callmsg) Nonce() uint64                         { return 0 }
-func (m callmsg) CheckNonce() bool                      { return false }
-func (m callmsg) To() *common.Address                   { return m.to }
-func (m callmsg) GasPrice() *big.Int                    { return m.gasPrice }
-func (m callmsg) Gas() *big.Int                         { return m.gas }
-func (m callmsg) Value() *big.Int                       { return m.value }
-func (m callmsg) Data() []byte                          { return m.data }
-
 // formatError formats a Go error into either an empty string or the data content
 // of the error itself.
 func formatError(err error) string {
@@ -637,7 +617,7 @@ func (api *PrivateDebugAPI) StorageRangeAt(ctx context.Context, blockHash common
 	return storageRangeAt(st, keyStart, maxResult), nil
 }
 
-func storageRangeAt(st *trie.SecureTrie, start []byte, maxResult int) StorageRangeResult {
+func storageRangeAt(st state.Trie, start []byte, maxResult int) StorageRangeResult {
 	it := trie.NewIterator(st.NodeIterator(start))
 	result := StorageRangeResult{Storage: storageMap{}}
 	for i := 0; i < maxResult && it.Next(); i++ {

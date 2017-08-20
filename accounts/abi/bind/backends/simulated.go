@@ -33,7 +33,6 @@ import (
 	"github.com/expanse-org/go-expanse/core/types"
 	"github.com/expanse-org/go-expanse/core/vm"
 	"github.com/expanse-org/go-expanse/ethdb"
-	"github.com/expanse-org/go-expanse/event"
 	"github.com/expanse-org/go-expanse/params"
 )
 
@@ -61,7 +60,7 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 	database, _ := ethdb.NewMemDatabase()
 	genesis := core.Genesis{Config: params.AllProtocolChanges, Alloc: alloc}
 	genesis.MustCommit(database)
-	blockchain, _ := core.NewBlockChain(database, genesis.Config, ethash.NewFaker(), new(event.TypeMux), vm.Config{})
+	blockchain, _ := core.NewBlockChain(database, genesis.Config, ethash.NewFaker(), vm.Config{})
 	backend := &SimulatedBackend{database: database, blockchain: blockchain, config: genesis.Config}
 	backend.rollback()
 	return backend
@@ -90,7 +89,7 @@ func (b *SimulatedBackend) Rollback() {
 func (b *SimulatedBackend) rollback() {
 	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), b.database, 1, func(int, *core.BlockGen) {})
 	b.pendingBlock = blocks[0]
-	b.pendingState, _ = state.New(b.pendingBlock.Root(), b.database)
+	b.pendingState, _ = state.New(b.pendingBlock.Root(), state.NewDatabase(b.database))
 }
 
 // CodeAt returns the code associated with a certain account in the blockchain.
@@ -144,7 +143,8 @@ func (b *SimulatedBackend) StorageAt(ctx context.Context, contract common.Addres
 
 // TransactionReceipt returns the receipt of a transaction.
 func (b *SimulatedBackend) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
-	return core.GetReceipt(b.database, txHash), nil
+	receipt, _, _, _ := core.GetReceipt(b.database, txHash)
+	return receipt, nil
 }
 
 // PendingCodeAt returns the code associated with an account in the pending state.
@@ -279,7 +279,7 @@ func (b *SimulatedBackend) SendTransaction(ctx context.Context, tx *types.Transa
 		block.AddTx(tx)
 	})
 	b.pendingBlock = blocks[0]
-	b.pendingState, _ = state.New(b.pendingBlock.Root(), b.database)
+	b.pendingState, _ = state.New(b.pendingBlock.Root(), state.NewDatabase(b.database))
 	return nil
 }
 

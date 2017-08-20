@@ -53,12 +53,44 @@ type operation struct {
 	valid bool
 	// reverts determined whether the operation reverts state
 	reverts bool
+	// returns determines whether the opertions sets the return data
+	returns bool
 }
 
 var (
-	frontierInstructionSet  = NewFrontierInstructionSet()
-	homesteadInstructionSet = NewHomesteadInstructionSet()
+	frontierInstructionSet   = NewFrontierInstructionSet()
+	homesteadInstructionSet  = NewHomesteadInstructionSet()
+	metropolisInstructionSet = NewMetropolisInstructionSet()
 )
+
+// NewMetropolisInstructionSet returns the frontier, homestead and
+// metropolis instructions.
+func NewMetropolisInstructionSet() [256]operation {
+	// instructions that can be executed during the homestead phase.
+	instructionSet := NewHomesteadInstructionSet()
+	instructionSet[STATICCALL] = operation{
+		execute:       opStaticCall,
+		gasCost:       gasStaticCall,
+		validateStack: makeStackFunc(6, 1),
+		memorySize:    memoryStaticCall,
+		valid:         true,
+		returns:       true,
+	}
+	instructionSet[RETURNDATASIZE] = operation{
+		execute:       opReturnDataSize,
+		gasCost:       constGasFunc(GasQuickStep),
+		validateStack: makeStackFunc(0, 1),
+		valid:         true,
+	}
+	instructionSet[RETURNDATACOPY] = operation{
+		execute:       opReturnDataCopy,
+		gasCost:       gasReturnDataCopy,
+		validateStack: makeStackFunc(3, 0),
+		memorySize:    memoryReturnDataCopy,
+		valid:         true,
+	}
+	return instructionSet
+}
 
 // NewHomesteadInstructionSet returns the frontier and homestead
 // instructions that can be executed during the homestead phase.
@@ -70,6 +102,7 @@ func NewHomesteadInstructionSet() [256]operation {
 		validateStack: makeStackFunc(6, 1),
 		memorySize:    memoryDelegateCall,
 		valid:         true,
+		returns:       true,
 	}
 	return instructionSet
 }
@@ -255,22 +288,22 @@ func NewFrontierInstructionSet() [256]operation {
 			valid:         true,
 		},
 		CALLDATALOAD: {
-			execute:       opCalldataLoad,
+			execute:       opCallDataLoad,
 			gasCost:       constGasFunc(GasFastestStep),
 			validateStack: makeStackFunc(1, 1),
 			valid:         true,
 		},
 		CALLDATASIZE: {
-			execute:       opCalldataSize,
+			execute:       opCallDataSize,
 			gasCost:       constGasFunc(GasQuickStep),
 			validateStack: makeStackFunc(0, 1),
 			valid:         true,
 		},
 		CALLDATACOPY: {
-			execute:       opCalldataCopy,
-			gasCost:       gasCalldataCopy,
+			execute:       opCallDataCopy,
+			gasCost:       gasCallDataCopy,
 			validateStack: makeStackFunc(3, 0),
-			memorySize:    memoryCalldataCopy,
+			memorySize:    memoryCallDataCopy,
 			valid:         true,
 		},
 		CODESIZE: {
@@ -810,6 +843,7 @@ func NewFrontierInstructionSet() [256]operation {
 			validateStack: makeStackFunc(2, 0),
 			memorySize:    memoryLog,
 			valid:         true,
+			writes:        true,
 		},
 		LOG1: {
 			execute:       makeLog(1),
@@ -817,6 +851,7 @@ func NewFrontierInstructionSet() [256]operation {
 			validateStack: makeStackFunc(3, 0),
 			memorySize:    memoryLog,
 			valid:         true,
+			writes:        true,
 		},
 		LOG2: {
 			execute:       makeLog(2),
@@ -824,6 +859,7 @@ func NewFrontierInstructionSet() [256]operation {
 			validateStack: makeStackFunc(4, 0),
 			memorySize:    memoryLog,
 			valid:         true,
+			writes:        true,
 		},
 		LOG3: {
 			execute:       makeLog(3),
@@ -831,6 +867,7 @@ func NewFrontierInstructionSet() [256]operation {
 			validateStack: makeStackFunc(5, 0),
 			memorySize:    memoryLog,
 			valid:         true,
+			writes:        true,
 		},
 		LOG4: {
 			execute:       makeLog(4),
@@ -838,6 +875,7 @@ func NewFrontierInstructionSet() [256]operation {
 			validateStack: makeStackFunc(6, 0),
 			memorySize:    memoryLog,
 			valid:         true,
+			writes:        true,
 		},
 		CREATE: {
 			execute:       opCreate,
@@ -846,6 +884,7 @@ func NewFrontierInstructionSet() [256]operation {
 			memorySize:    memoryCreate,
 			valid:         true,
 			writes:        true,
+			returns:       true,
 		},
 		CALL: {
 			execute:       opCall,
@@ -853,6 +892,7 @@ func NewFrontierInstructionSet() [256]operation {
 			validateStack: makeStackFunc(7, 1),
 			memorySize:    memoryCall,
 			valid:         true,
+			returns:       true,
 		},
 		CALLCODE: {
 			execute:       opCallCode,
@@ -860,6 +900,7 @@ func NewFrontierInstructionSet() [256]operation {
 			validateStack: makeStackFunc(7, 1),
 			memorySize:    memoryCall,
 			valid:         true,
+			returns:       true,
 		},
 		RETURN: {
 			execute:       opReturn,
