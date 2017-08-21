@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.6
 
 ADD . /go-expanse
 RUN \
@@ -6,10 +6,8 @@ RUN \
   (cd go-expanse && make gexp)                           && \
   cp go-expanse/build/bin/gexp /usr/local/bin/           && \
   apk del git go make gcc musl-dev linux-headers          && \
-  rm -rf /go-expanse && rm -rf /var/cache/apk/*
+  rm -rf /go-expanse
 
-EXPOSE 9656
-EXPOSE 42786
-EXPOSE 42786/udp
+EXPOSE 9656 42786 42786/udp
 
 ENTRYPOINT ["gexp"]
