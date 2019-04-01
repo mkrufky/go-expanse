@@ -31,7 +31,9 @@ import (
 	"github.com/expanse-org/go-expanse/common/bitutil"
 	"github.com/expanse-org/go-expanse/crypto"
 	"github.com/expanse-org/go-expanse/log"
+	//"github.com/expanse-org/go-expanse/params"
 	"golang.org/x/crypto/sha3"
+	"crypto/sha512"
 )
 
 const (
@@ -46,6 +48,7 @@ const (
 	datasetParents     = 256     // Number of parents of each dataset element
 	cacheRounds        = 3       // Number of rounds in cache production
 	loopAccesses       = 64      // Number of accesses in hashimoto loop
+	xip2Epoch					 = 60		// Epoch number for Exp Upgrade
 )
 
 // cacheSize returns the size of the ethash verification cache that belongs to a certain
@@ -123,9 +126,14 @@ func seedHash(block uint64) []byte {
 	if block < epochLength {
 		return seed
 	}
-	keccak256 := makeHasher(sha3.NewLegacyKeccak256())
+	hash256 := makeHasher(sha3.NewLegacyKeccak256())
+	// should probably add this to params
+	if(block >= 1800000){
+		hash256 = makeHasher(sha512.New512_256())
+	}
+
 	for i := 0; i < int(block/epochLength); i++ {
-		keccak256(seed, seed)
+		hash256(seed, seed)
 	}
 	return seed
 }
@@ -177,12 +185,16 @@ func generateCache(dest []uint32, epoch uint64, seed []byte) {
 		}
 	}()
 	// Create a hasher to reuse between invocations
-	keccak512 := makeHasher(sha3.NewLegacyKeccak512())
+	hash512 := makeHasher(sha3.NewLegacyKeccak512())
 
+	if epoch >= xip2Epoch {
+		h := sha512.New()
+		hash512 = makeHasher(h)
+	}
 	// Sequentially produce the initial dataset
-	keccak512(cache, seed)
+	hash512(cache, seed)
 	for offset := uint64(hashBytes); offset < size; offset += hashBytes {
-		keccak512(cache[offset:], cache[offset-hashBytes:offset])
+		hash512(cache[offset:], cache[offset-hashBytes:offset])
 		atomic.AddUint32(&progress, 1)
 	}
 	// Use a low-round version of randmemohash
@@ -196,7 +208,7 @@ func generateCache(dest []uint32, epoch uint64, seed []byte) {
 				xorOff = (binary.LittleEndian.Uint32(cache[dstOff:]) % uint32(rows)) * hashBytes
 			)
 			bitutil.XORBytes(temp, cache[srcOff:srcOff+hashBytes], cache[xorOff:xorOff+hashBytes])
-			keccak512(cache[dstOff:], temp)
+			hash512(cache[dstOff:], temp)
 
 			atomic.AddUint32(&progress, 1)
 		}
@@ -231,7 +243,7 @@ func fnvHash(mix []uint32, data []uint32) {
 
 // generateDatasetItem combines data from 256 pseudorandomly selected cache nodes,
 // and hashes that to compute a single dataset node.
-func generateDatasetItem(cache []uint32, index uint32, keccak512 hasher) []byte {
+func generateDatasetItem(cache []uint32, index uint32, hash512 hasher) []byte {
 	// Calculate the number of theoretical rows (we use one buffer nonetheless)
 	rows := uint32(len(cache) / hashWords)
 
@@ -242,7 +254,7 @@ func generateDatasetItem(cache []uint32, index uint32, keccak512 hasher) []byte 
 	for i := 1; i < hashWords; i++ {
 		binary.LittleEndian.PutUint32(mix[i*4:], cache[(index%rows)*hashWords+uint32(i)])
 	}
-	keccak512(mix, mix)
+	hash512(mix, mix)
 
 	// Convert the mix to uint32s to avoid constant bit shifting
 	intMix := make([]uint32, hashWords)
@@ -258,7 +270,7 @@ func generateDatasetItem(cache []uint32, index uint32, keccak512 hasher) []byte 
 	for i, val := range intMix {
 		binary.LittleEndian.PutUint32(mix[i*4:], val)
 	}
-	keccak512(mix, mix)
+	hash512(mix, mix)
 	return mix
 }
 
@@ -301,7 +313,12 @@ func generateDataset(dest []uint32, epoch uint64, cache []uint32) {
 			defer pend.Done()
 
 			// Create a hasher to reuse between invocations
-			keccak512 := makeHasher(sha3.NewLegacyKeccak512())
+			hash512 := makeHasher(sha3.NewLegacyKeccak512())
+
+			if epoch >= xip2Epoch {
+				h := sha512.New()
+				hash512 = makeHasher(h)
+			}
 
 			// Calculate the data segment this thread should generate
 			batch := uint32((size + hashBytes*uint64(threads) - 1) / (hashBytes * uint64(threads)))
@@ -313,7 +330,7 @@ func generateDataset(dest []uint32, epoch uint64, cache []uint32) {
 			// Calculate the dataset segment
 			percent := uint32(size / hashBytes / 100)
 			for index := first; index < limit; index++ {
-				item := generateDatasetItem(cache, index, keccak512)
+				item := generateDatasetItem(cache, index, hash512)
 				if swapped {
 					swap(item)
 				}
@@ -371,6 +388,46 @@ func hashimoto(hash []byte, nonce uint64, size uint64, lookup func(index uint32)
 	return digest, crypto.Keccak256(append(seed, digest...))
 }
 
+func frankomoto(hash []byte, nonce uint64, size uint64, lookup func(index uint32) []uint32) ([]byte, []byte) {
+	// Calculate the number of theoretical rows (we use one buffer nonetheless)
+	rows := uint32(size / mixBytes)
+
+	// Combine header+nonce into a 64 byte seed
+	seed := make([]byte, 40)
+	copy(seed, hash)
+	binary.LittleEndian.PutUint64(seed[32:], nonce)
+
+	seed = crypto.Sha512(seed)
+	seedHead := binary.LittleEndian.Uint32(seed)
+
+	// Start the mix with replicated seed
+	mix := make([]uint32, mixBytes/4)
+	for i := 0; i < len(mix); i++ {
+		mix[i] = binary.LittleEndian.Uint32(seed[i%16*4:])
+	}
+	// Mix in random dataset nodes
+	temp := make([]uint32, len(mix))
+
+	for i := 0; i < loopAccesses; i++ {
+		parent := fnv(uint32(i)^seedHead, mix[i%len(mix)]) % rows
+		for j := uint32(0); j < mixBytes/hashBytes; j++ {
+			copy(temp[j*hashWords:], lookup(2*parent+j))
+		}
+		fnvHash(mix, temp)
+	}
+	// Compress mix
+	for i := 0; i < len(mix); i += 4 {
+		mix[i/4] = fnv(fnv(fnv(mix[i], mix[i+1]), mix[i+2]), mix[i+3])
+	}
+	mix = mix[:len(mix)/4]
+
+	digest := make([]byte, common.HashLength)
+	for i, val := range mix {
+		binary.LittleEndian.PutUint32(digest[i*4:], val)
+	}
+	return digest, crypto.Sha512_256(append(seed, digest...))
+}
+
 // hashimotoLight aggregates data from the full dataset (using only a small
 // in-memory cache) in order to produce our final value for a particular header
 // hash and nonce.
@@ -389,6 +446,21 @@ func hashimotoLight(size uint64, cache []uint32, hash []byte, nonce uint64) ([]b
 	return hashimoto(hash, nonce, size, lookup)
 }
 
+func frankomotoLight(size uint64, cache []uint32, hash []byte, nonce uint64) ([]byte, []byte) {
+	sha512 := makeHasher(sha512.New())
+
+	lookup := func(index uint32) []uint32 {
+		rawData := generateDatasetItem(cache, index, sha512)
+
+		data := make([]uint32, len(rawData)/4)
+		for i := 0; i < len(data); i++ {
+			data[i] = binary.LittleEndian.Uint32(rawData[i*4:])
+		}
+		return data
+	}
+	return frankomoto(hash, nonce, size, lookup)
+}
+
 // hashimotoFull aggregates data from the full dataset (using the full in-memory
 // dataset) in order to produce our final value for a particular header hash and
 // nonce.
@@ -398,6 +470,14 @@ func hashimotoFull(dataset []uint32, hash []byte, nonce uint64) ([]byte, []byte)
 		return dataset[offset : offset+hashWords]
 	}
 	return hashimoto(hash, nonce, uint64(len(dataset))*4, lookup)
+}
+
+func frankomotoFull(dataset []uint32, hash []byte, nonce uint64) ([]byte, []byte) {
+	lookup := func(index uint32) []uint32 {
+		offset := index * hashWords
+		return dataset[offset : offset+hashWords]
+	}
+	return frankomoto(hash, nonce, uint64(len(dataset))*4, lookup)
 }
 
 const maxEpoch = 2048

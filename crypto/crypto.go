@@ -20,6 +20,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha512"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -40,6 +41,22 @@ var (
 )
 
 var errInvalidPubkey = errors.New("invalid secp256k1 public key")
+
+func Sha512(data ...[]byte) []byte {
+	d := sha512.New()
+	for _, b := range data {
+		d.Write(b)
+	}
+	return d.Sum(nil)
+}
+
+func Sha512_256(data ...[]byte) []byte {
+	d := sha512.New512_256()
+	for _, b := range data {
+		d.Write(b)
+	}
+	return d.Sum(nil)
+}
 
 // Keccak256 calculates and returns the Keccak256 hash of the input data.
 func Keccak256(data ...[]byte) []byte {
