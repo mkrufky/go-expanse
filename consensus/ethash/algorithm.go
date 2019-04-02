@@ -31,7 +31,7 @@ import (
 	"github.com/expanse-org/go-expanse/common/bitutil"
 	"github.com/expanse-org/go-expanse/crypto"
 	"github.com/expanse-org/go-expanse/log"
-	//"github.com/expanse-org/go-expanse/params"
+	"github.com/expanse-org/go-expanse/params"
 	"golang.org/x/crypto/sha3"
 	"crypto/sha512"
 )
@@ -48,7 +48,10 @@ const (
 	datasetParents     = 256     // Number of parents of each dataset element
 	cacheRounds        = 3       // Number of rounds in cache production
 	loopAccesses       = 64      // Number of accesses in hashimoto loop
-	xip2Epoch       	 = 64      
+)
+
+var (
+	xip2Epoch       	 = params.MainnetChainConfig.Ethash.XIP2Epoch
 )
 
 // cacheSize returns the size of the ethash verification cache that belongs to a certain
@@ -128,7 +131,7 @@ func seedHash(block uint64) []byte {
 	}
 	hash256 := makeHasher(sha3.NewLegacyKeccak256())
 	// should probably add this to params
-	if(block >= 1800000){
+	if(block >= (xip2Epoch * epochLength)){
 		hash256 = makeHasher(sha512.New512_256())
 	}
 
