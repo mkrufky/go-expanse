@@ -51,6 +51,7 @@ const (
 )
 
 var (
+	// This should probably be set somewhere else and use the current config file
 	xip2Epoch       	 = params.MainnetChainConfig.Ethash.XIP2Epoch
 )
 
