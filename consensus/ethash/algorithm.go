@@ -52,7 +52,8 @@ const (
 
 var (
 	// This should probably be set somewhere else and use the current config file
-	xip2Epoch       	 = params.MainnetChainConfig.Ethash.XIP2Epoch
+	//xip2Epoch       	 = params.MainnetChainConfig.Ethash.XIP2Epoch
+	xip2Epoch       	 = params.TestnetChainConfig.Ethash.XIP2Epoch
 )
 
 // cacheSize returns the size of the ethash verification cache that belongs to a certain
@@ -104,6 +105,7 @@ type hasher func(dest []byte, data []byte)
 // makeHasher creates a repetitive hasher, allowing the same hash data structures to
 // be reused between hash runs instead of requiring new ones to be created. The returned
 // function is not thread safe!
+/*
 func makeHasher(h hash.Hash) hasher {
 	// sha3.state supports Read to get the sum, use it to avoid the overhead of Sum.
 	// Read alters the state but we reset the hash before every operation.
@@ -120,6 +122,15 @@ func makeHasher(h hash.Hash) hasher {
 		rh.Reset()
 		rh.Write(data)
 		rh.Read(dest[:outputLen])
+	}
+}
+*/
+
+func makeHasher(h hash.Hash) hasher {
+	return func(dest []byte, data []byte) {
+		h.Write(data)
+		h.Sum(dest[:0])
+		h.Reset()
 	}
 }
 
