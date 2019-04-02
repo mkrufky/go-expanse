@@ -528,7 +528,7 @@ func (ethash *Ethash) verifySeal(chain consensus.ChainReader, header *types.Head
 		dataset := ethash.dataset(number, true)
 		if dataset.generated() {
 
-			if(chain.Config().IsConstantinople(header.Number)){
+			if(chain.Config().IsXIP2(header.Number)){
 				digest, result = frankomotoFull(dataset.dataset, ethash.SealHash(header).Bytes(), header.Nonce.Uint64())
 			}else{
 				digest, result = hashimotoFull(dataset.dataset, ethash.SealHash(header).Bytes(), header.Nonce.Uint64())
@@ -552,7 +552,7 @@ func (ethash *Ethash) verifySeal(chain consensus.ChainReader, header *types.Head
 			size = 32 * 1024
 		}
 
-		if(chain.Config().IsConstantinople(header.Number)){
+		if(chain.Config().IsXIP2(header.Number)){
 			digest, result = frankomotoLight(size, cache.cache, ethash.SealHash(header).Bytes(), header.Nonce.Uint64())
 		}else{
 			digest, result = hashimotoLight(size, cache.cache, ethash.SealHash(header).Bytes(), header.Nonce.Uint64())

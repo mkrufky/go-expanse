@@ -44,7 +44,10 @@ var (
 		ByzantiumBlock:      big.NewInt(800000),
 		ConstantinopleBlock: big.NewInt(1800000),
 		PetersburgBlock:     big.NewInt(1800000),
-		Ethash:              new(EthashConfig),
+		Ethash:              &EthashConfig{
+			XIP2Block:					 big.NewInt(1800000),
+			XIP2Epoch:					 60,
+		},
 	}
 
 	// MainnetTrustedCheckpoint contains the light client trusted checkpoint for the main network.
@@ -141,7 +144,7 @@ var (
 	//
 	// This configuration is intentionally not using keyed fields to force anyone
 	// adding flags to the config to also have to set these fields.
-	AllEthashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, new(EthashConfig), nil}
+	AllEthashProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), nil, false, big.NewInt(0), common.Hash{}, big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), big.NewInt(0), nil, &EthashConfig{XIP2Block: big.NewInt(0), XIP2Epoch: 0}, nil}
 
 	// AllCliqueProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the Ethereum core developers into the Clique consensus.
@@ -191,13 +194,18 @@ type ChainConfig struct {
 	PetersburgBlock     *big.Int `json:"petersburgBlock,omitempty"`     // Petersburg switch block (nil = same as Constantinople)
 	EWASMBlock          *big.Int `json:"ewasmBlock,omitempty"`          // EWASM switch block (nil = no fork, 0 = already activated)
 
+
+
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
 	Clique *CliqueConfig `json:"clique,omitempty"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
-type EthashConfig struct{}
+type EthashConfig struct{
+	XIP2Block *big.Int `json:"xip2Block",omitempty` // XIP2 HF Block
+	XIP2Epoch uint64 `json:"xip2Epoch", omitempty` // XIP2 Epoch for Hashimoto to Frankomoto
+}
 
 // String implements the stringer interface, returning the consensus engine details.
 func (c *EthashConfig) String() string {
@@ -274,6 +282,10 @@ func (c *ChainConfig) IsByzantium(num *big.Int) bool {
 // IsConstantinople returns whether num is either equal to the Constantinople fork block or greater.
 func (c *ChainConfig) IsConstantinople(num *big.Int) bool {
 	return isForked(c.ConstantinopleBlock, num)
+}
+
+func (c *ChainConfig) IsXIP2(num *big.Int) bool {
+	return isForked(c.Ethash.XIP2Block, num)
 }
 
 // IsPetersburg returns whether num is either

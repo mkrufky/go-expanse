@@ -48,7 +48,7 @@ const (
 	datasetParents     = 256     // Number of parents of each dataset element
 	cacheRounds        = 3       // Number of rounds in cache production
 	loopAccesses       = 64      // Number of accesses in hashimoto loop
-	xip2Epoch					 = 60		// Epoch number for Exp Upgrade
+	xip2Epoch       	 = 64      
 )
 
 // cacheSize returns the size of the ethash verification cache that belongs to a certain
